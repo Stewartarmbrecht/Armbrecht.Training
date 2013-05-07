@@ -1,7 +1,7 @@
 var express = require('express'),
    mongo = require('mongoskin');
 
-var connection = 'stewartarmbrecht:Qc!814u2@widmore.mongohq.com:10000/ArmbrechtTraining';
+var connection = 'stewartarmbrecht:Password@widmore.mongohq.com:10000/ArmbrechtTraining';
 var app = express();
 app.configure(function(){
   app.use(express.bodyParser());
