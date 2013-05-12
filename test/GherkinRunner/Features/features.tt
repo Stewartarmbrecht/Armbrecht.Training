@@ -1,0 +1,204 @@
+﻿<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.IO" #>
+<#@ include file="T4Toolbox.tt" #>
+<#@ include file="..\Manager.ttinclude" #>
+<#@ output extension=".js" #>
+<# 
+	var manager = Manager.Create(Host, GenerationEnvironment); 		
+	var hostPath = this.Host.ResolvePath("");
+	RunDirectories(hostPath, hostPath);
+#>
+<#+
+	public void RunDirectories(string folderPath, string hostPath)
+	{
+		var directories = System.IO.Directory.EnumerateDirectories(folderPath);
+		foreach(var directory in directories)
+		{
+			RunDirectories(directory, hostPath);
+			var files = System.IO.Directory.EnumerateFiles(directory);
+			LibraryFileTemplate template = new LibraryFileTemplate(files);
+			template.Output.File = directory.Substring(directory.IndexOf("\\Features") + 10).Replace("\\", "-") + "-library.js";
+			template.Render();
+		}
+		FeatureSetFileTemplate template2 = new FeatureSetFileTemplate(folderPath);
+		template2.Output.File = folderPath + "\\featureSet.js";
+		template2.Render();
+
+		if(!folderPath.EndsWith("\\Features"))
+        {
+			FeatureSetRunnerFileTemplate template3 = new FeatureSetRunnerFileTemplate(folderPath);
+			template3.Output.File = hostPath.Substring(0, hostPath.Length - 9) + "\\Runners\\" + folderPath.Substring(folderPath.IndexOf("\\Features") + 10).Replace("\\","-") + ".html";
+			template3.Render();
+        }
+	}
+#>
+<#+
+    public class LibraryFileTemplate : Template
+    {
+        public LibraryFileTemplate (IEnumerable<string> files)
+        {
+			this.files = files;
+        }
+		private IEnumerable<string> files;
+        public override string TransformText()
+        {
+#>
+define(['Features/testHelper'], function (testHelper) {
+    var _this = {};
+<#+
+			var methods = new List<string>();
+			foreach(var filePath in files.Where(x => x.EndsWith("html")))
+			{
+				var path = filePath.Replace(".html",".js");
+				var fileName = path.Substring(path.IndexOf("\\Features") + 10).Replace("\\", "-");
+				var featureFileName = filePath.Substring(filePath.LastIndexOf("\\") + 1).Replace(".html","");
+				var featureFolderName = filePath.Substring(0, filePath.Length - (featureFileName.Length + 11));
+				featureFolderName = featureFolderName.Substring(featureFolderName.LastIndexOf("\\") + 1);
+				var lines = File.ReadAllLines(filePath);
+				foreach(var line in lines.Where(x => 
+					x.Trim().Length > 0
+					&& (
+						x.Trim().ToLower().StartsWith("given") ||
+						x.Trim().ToLower().StartsWith("when") ||
+						x.Trim().ToLower().StartsWith("then") ||
+						x.Trim().ToLower().StartsWith("and")
+					)
+					).Select(x => x.Trim()).Distinct())
+				{
+					var lineText = line;
+					if(line.ToString().ToLower().StartsWith("given"))
+					{
+						lineText = line.ToString().Substring(6).Trim();
+					}
+					if(line.ToString().ToLower().StartsWith("when"))
+					{
+						lineText = line.ToString().Substring(5).Trim();
+					}
+					if(line.ToString().ToLower().StartsWith("then"))
+					{
+						lineText = line.ToString().Substring(5).Trim();
+					}
+					if(line.ToString().ToLower().StartsWith("and"))
+					{
+						lineText = line.ToString().Substring(4).Trim();
+					}
+					methods.Add(lineText);
+				}
+			}
+			foreach(var method in methods.OrderBy(x => x).Distinct())
+            {
+#>
+    _this['<#=method#>'] = function (context, promise) {
+		promise.reject();
+    };
+<#+
+			}
+#>
+    return _this;
+});
+<#+
+            return this.GenerationEnvironment.ToString();
+        }
+    }
+#>
+<#+
+    public class FeatureSetFileTemplate : Template
+    {
+        public FeatureSetFileTemplate (string directoryPath)
+        {
+			this.directoryPath = directoryPath;
+        }
+		private string directoryPath;
+        public override string TransformText()
+        {
+			var files = System.IO.Directory.EnumerateFiles(directoryPath);
+			var directories = System.IO.Directory.EnumerateDirectories(directoryPath);
+			var domainFolder = directoryPath.Substring(directoryPath.LastIndexOf("\\Features") + 9);
+			var domainFolderName = domainFolder.Replace("\\", " ") + " ";
+#>
+define(function () {
+    return {
+        name: "<#=domainFolderName#>Features",
+        featureSets: [
+<#+
+			foreach(var subDirectoryPath in directories)
+			{
+				var subDomainFolder = subDirectoryPath.Substring(directoryPath.LastIndexOf("\\Features") + 9);
+				var featureSetFileName = subDomainFolder.Replace("\\", "/") + "/featureSet";
+			#>
+            "<#="Features" + featureSetFileName#>",
+<#+
+			}
+#>		],
+        features: [
+<#+
+			foreach(var filePath in files.Where(x => x.EndsWith("html")))
+			{
+				var featureFileName = filePath.Substring(filePath.LastIndexOf("\\") + 1).Replace(".html","");
+			#>
+            "<#="Features" + domainFolder.Replace("\\", "/") + "/" + featureFileName#>",
+<#+
+			}
+#>
+        ]
+    };
+});
+<#+
+            return this.GenerationEnvironment.ToString();
+        }
+    }
+#>
+<#+
+    public class FeatureSetRunnerFileTemplate : Template
+    {
+        public FeatureSetRunnerFileTemplate (string domainfolder)
+        {
+			this.domainfolder = domainfolder;
+        }
+		string domainfolder;
+        public override string TransformText()
+        {
+			var featureSetPath = domainfolder.Substring(domainfolder.LastIndexOf("\\Features") + 9);
+			featureSetPath = featureSetPath.Replace("\\", "/") + "/featureSet";
+
+#>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>Jasmine Spec Runner</title>
+
+    <link rel="stylesheet" type="text/css" href="../Content/jasmine/jasmine.css">
+    <script type="text/javascript" src="../Scripts/jasmine/jasmine.js"></script>
+    <script type="text/javascript" src="../Scripts/jasmine/jasmine-html.js"></script>
+
+    <!-- include source files here... -->
+    <script type="text/javascript" src="../Scripts/jquery-2.0.0.js"></script>
+    <script type="text/javascript" src="../Scripts/knockout-2.2.1.js"></script>
+    <script type="text/javascript" src="../Scripts/q.js"></script>
+    <script type="text/javascript" src="../Scripts/breeze.debug.js"></script>
+    <script type="text/javascript" src="../Scripts/require.js"></script>
+    <script type="text/javascript" src="../Scripts/moment.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+			require.config({ baseUrl: "../" });
+            require(["Scripts/gherkinRunner"], function (gherkinRunner) {
+                gherkinRunner.addFeatureSet("Features<#=featureSetPath#>");
+                gherkinRunner.run();
+            });
+        });
+    </script>
+</head>
+
+<body>
+</body>
+</html>
+<#+
+            return this.GenerationEnvironment.ToString();
+        }
+    }
+#>

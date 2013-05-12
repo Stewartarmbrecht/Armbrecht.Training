@@ -1,0 +1,10 @@
+﻿Feature: API Room Add
+    As a system client connected as a user with the ability to manage rooms
+    I should be able to add a room to the practice
+    So that we can track where the patients are meeting with the provider
+
+    Scenario: Add Room
+	    Given the client is connected as a user who can manage rooms
+          and the client adds a new location to the practice
+         When the client adds a new room to the location of the practice
+         Then the client should be able to get the new room from the API

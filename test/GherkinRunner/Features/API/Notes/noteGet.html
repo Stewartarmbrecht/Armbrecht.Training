@@ -1,0 +1,127 @@
+﻿Feature: API Note Get
+    As a system client 
+    I should be able to get a list of notes for a single entity
+    So that the user can view the list of notes added to an entity
+
+    Feature Background: Setup Note Objects
+        Given the client is connected as "Administrator"
+          and the practice has the following staff members
+                | UserName             | Provider |
+                | NoteGetProvider      | 1        |
+                | NoteGetPerm          | 0        |
+                | NoteGetNoPerm        | 0        |
+                | NoteGetCreator       | 0        |
+                | NoteGetPermNoPat     | 0        |
+          and the staff members have the following permissions
+                | UserName             | Permission            | Level |
+                | NoteGetPerm          | PAT_RegistrationNotes | 40    |
+                | NoteGetPerm          | PAT_OrderNotes        | 40    |
+                | NoteGetPerm          | PAT_AppointmentNotes  | 40    |
+                | NoteGetNoPerm        | PAT_RegistrationNotes | 0     |
+                | NoteGetNoPerm        | PAT_OrderNotes        | 0     |
+                | NoteGetNoPerm        | PAT_AppointmentNotes  | 0     |
+                | NoteGetCreator       | PAT_RegistrationNotes | 60    |
+                | NoteGetCreator       | PAT_OrderNotes        | 60    |
+                | NoteGetCreator       | PAT_AppointmentNotes  | 60    |
+                | NoteGetPermNoPat     | PAT_RegistrationNotes | 40    |
+                | NoteGetPermNoPat     | PAT_OrderNotes        | 40    |
+                | NoteGetPermNoPat     | PAT_AppointmentNotes  | 40    |
+          and the following staff members are linked to the provider named "NoteGetProvider"
+                | UserName            |
+                | NoteGetPerm         |
+                | NoteGetNoPerm       |
+                | NoteGetCreator      |
+          and the provider named "NoteGetProvider" has a patient named "NoteGetPatient"
+          and the patient named "NoteGetPatient" has an order called "NoteGetOrder"
+          and the patient named "NoteGetPatient" has an appointment called "NoteGetAppt"
+          and the client is logged off
+
+    Feature Background Outline: Setup Notes 
+        Given the client is connected as "NoteGetCreator"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+
+        Examples: 
+              | ObjectType  | ParentObjectName  | Count |
+              | Patient     | NoteGetPatient    | 15    |
+              | Appointment | NoteGetAppt       | 15    |
+              | Order       | NoteGetOrder      | 15    |
+
+    Scenario Outline: Get Notes
+	    Given the client is connected as "NoteGetPerm"
+         When the client queries for the list of notes for the <ObjectType> identified by <ParentObjectName>
+         Then the system should return a list of "10" notes
+
+        Examples: 
+              | ObjectType  | ParentObjectName  |
+              | Patient     | NoteGetPatient    |
+              | Appointment | NoteGetAppt       |
+              | Order       | NoteGetOrder      |
+
+    Scenario Outline: Get Notes No Patient Access
+	    Given the client is connected as "NoteGetPermNoPat"
+         When the client attempts a query for the list of notes for the <ObjectType> identified by <ParentObjectName>
+         Then the client should receive a response with a status of "403"
+          and the response message should be "No access to the specified patient."
+
+        Examples: 
+              | ObjectType  | ParentObjectName  |
+              | Patient     | NoteGetPatient    |
+              | Appointment | NoteGetAppt       |
+              | Order       | NoteGetOrder      |
+
+    Scenario Outline: Get Notes No Permission
+	    Given the client is connected as "NoteGetNoPerm"
+         When the client attempts a query for the list of notes for the <ObjectType> identified by <ParentObjectName>
+         Then the client should receive a response with a status of "403"
+          and the response message should be "You do not have the necessary permission."
+
+        Examples: 
+              | ObjectType  | ParentObjectName  |
+              | Patient     | NoteGetPatient    |
+              | Appointment | NoteGetAppt       |
+              | Order       | NoteGetOrder      |
+
+    Scenario Outline: Get Single Note
+        Given the client is connected as "NoteGetCreator"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+         When the client queries the API for the new note
+         Then the note should have the <ObjectType> identified by <ParentObjectName> as the parent
+          and the queried "Note" properties should match the added "Note" properties for the following properties
+              | Properties                                        |
+              | id, topicId, topicRecordId, urgent, subject, body |
+          and the created information should be set
+          and the modified information should be set
+
+        Examples: 
+              | ObjectType  | ParentObjectName  | Count |
+              | Patient     | NoteGetPatient    | 1     |
+              | Appointment | NoteGetAppt       | 1     |
+              | Order       | NoteGetOrder      | 1     |
+
+    Scenario Outline: Get Single Note No Permission
+        Given the client is connected as "NoteGetCreator"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+          and the client is connected as "NoteGetNoPerm"
+         When the client attempts to query the API for the new note
+         Then the client should receive a response with a status of "403"
+          and the response message should be "You do not have the necessary permission."
+
+        Examples: 
+              | ObjectType  | ParentObjectName  | Count |
+              | Patient     | NoteGetPatient    | 1     |
+              | Appointment | NoteGetAppt       | 1     |
+              | Order       | NoteGetOrder      | 1     |
+
+    Scenario Outline: Get Single Note No Patient Access
+        Given the client is connected as "NoteGetCreator"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+          and the client is connected as "NoteGetPermNoPat"
+         When the client attempts to query the API for the new note
+         Then the client should receive a response with a status of "403"
+          and the response message should be "No access to the specified patient."
+
+        Examples: 
+              | ObjectType  | ParentObjectName  | Count |
+              | Patient     | NoteGetPatient    | 1     |
+              | Appointment | NoteGetAppt       | 1     |
+              | Order       | NoteGetOrder      | 1     |

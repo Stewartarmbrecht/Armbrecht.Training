@@ -1,0 +1,9 @@
+﻿Feature: API Room Update
+    As a system client connected as a user with the ability to manage rooms
+    I should be able to update a room
+    So that we can maintain the correct room information
+
+    Scenario: Update Room
+	    Given the client is connected as a user who can manage rooms
+         When the client updates a room
+         Then the client should be able to get the updated room from the API

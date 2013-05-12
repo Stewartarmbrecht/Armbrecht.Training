@@ -1,0 +1,95 @@
+﻿Feature: API Note Delete
+    As a system client 
+    I should be able to delete notes
+    So that I can remove notes that are incorrect or are no longer relevant
+
+    Feature Background: Setup Notes 
+        Given the client is connected as "Administrator"
+          and the practice has the following staff members
+                | UserName             | Provider |
+                | NoteDelProvider      | 1        |
+                | NoteDelPerm          | 0        |
+                | NoteDelNoPermission  | 0        |
+                | NoteDelCreator       | 0        |
+                | NoteDelPermNoPat     | 0        |
+          and the staff members have the following permissions
+                | UserName             | Permission            | Level |
+                | NoteDelPerm          | PAT_RegistrationNotes | 80    |
+                | NoteDelPerm          | PAT_OrderNotes        | 80    |
+                | NoteDelPerm          | PAT_AppointmentNotes  | 80    |
+                | NoteDelNoPermission  | PAT_RegistrationNotes | 60    |
+                | NoteDelNoPermission  | PAT_OrderNotes        | 60    |
+                | NoteDelNoPermission  | PAT_AppointmentNotes  | 60    |
+                | NoteDelCreator       | PAT_RegistrationNotes | 60    |
+                | NoteDelCreator       | PAT_OrderNotes        | 60    |
+                | NoteDelCreator       | PAT_AppointmentNotes  | 60    |
+                | NoteDelPermNoPat     | PAT_RegistrationNotes | 80    |
+                | NoteDelPermNoPat     | PAT_OrderNotes        | 80    |
+                | NoteDelPermNoPat     | PAT_AppointmentNotes  | 80    |
+          and the following staff members are linked to the provider named "NoteDelProvider"
+                | UserName            |
+                | NoteDelPerm         |
+                | NoteDelNoPermission |
+                | NoteDelCreator      |
+          and the provider named "NoteDelProvider" has a patient named "NoteDelPatient"
+          and the patient named "NoteDelPatient" has an order called "NoteDelOrder"
+          and the patient named "NoteDelPatient" has an appointment called "NoteDelAppt"
+          and the client is logged off
+
+    Scenario Outline: Delete Note As Creator
+	    Given the client is connected as "NoteDelCreator"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+          and the client should be able to query the API for the new note
+         When the client deletes the note
+         Then the client should NOT be able to query the API for the new note
+
+        Examples: 
+              | ObjectType  | ParentObjectName  | Count |
+              | Patient     | NoteDelPatient    | 1     |
+              | Appointment | NoteDelAppt       | 1     |
+              | Order       | NoteDelOrder      | 1     |
+
+    Scenario Outline: Delete Note As Not Creator And Without Delete Permission
+	    Given the client is connected as "NoteDelCreator"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+          and the client should be able to query the API for the new note
+          and the client is connected as "NoteDelNoPermission"
+         When the client attempts to delete the note
+         Then the client should receive a response with a status of "403"
+          and the response message should be "Attempted to perform an unauthorized operation."
+
+        Examples: 
+              | ObjectType  | ParentObjectName  | Count |
+              | Patient     | NoteDelPatient    | 1     |
+              | Appointment | NoteDelAppt       | 1     |
+              | Order       | NoteDelOrder      | 1     |
+
+    Scenario Outline: Delete Note With Delete Permission
+	    Given the client is connected as "NoteDelCreator"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+          and the client should be able to query the API for the new note
+          and the client is connected as "NoteDelPerm"
+         When the client deletes the note
+         Then the client should NOT be able to query the API for the new note
+
+        Examples: 
+              | ObjectType  | ParentObjectName  | Count |
+              | Patient     | NoteDelPatient    | 1     |
+              | Appointment | NoteDelAppt       | 1     |
+              | Order       | NoteDelOrder      | 1     |
+
+    Scenario Outline: Delete Note As Not Creator And With Delete Permission Without Patient Access
+	    Given the client is connected as "NoteDelCreator"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+          and the client should be able to query the API for the new note
+          and the client is connected as "NoteDelPermNoPat"
+         When the client attempts to delete the note
+         Then the client should receive a response with a status of "403"
+          and the response message should be "No access to the specified patient."
+
+        Examples: 
+              | ObjectType  | ParentObjectName  | Count |
+              | Patient     | NoteDelPatient    | 1     |
+              | Appointment | NoteDelAppt       | 1     |
+              | Order       | NoteDelOrder      | 1     |
+

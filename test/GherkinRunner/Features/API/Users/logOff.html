@@ -1,0 +1,11 @@
+﻿Feature: Log Off from API
+    As a system client 
+    I should be able to log off from the API
+    So that I can prevent others from accessing the API as the current user.
+
+    Scenario: Valid API log in
+	    Given the client is authenticated
+          and the client can access a secure resource
+         When the client logs off
+         Then the client should not be authenticated
+          and the client can not access a secure resource

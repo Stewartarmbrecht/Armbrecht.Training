@@ -1,0 +1,31 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>Jasmine Spec Runner</title>
+
+    <link rel="stylesheet" type="text/css" href="../Content/jasmine/jasmine.css">
+    <script type="text/javascript" src="../Scripts/jasmine/jasmine.js"></script>
+    <script type="text/javascript" src="../Scripts/jasmine/jasmine-html.js"></script>
+
+    <!-- include source files here... -->
+    <script type="text/javascript" src="../Scripts/jquery-2.0.0.js"></script>
+    <script type="text/javascript" src="../Scripts/knockout-2.2.1.js"></script>
+    <script type="text/javascript" src="../Scripts/q.js"></script>
+    <script type="text/javascript" src="../Scripts/breeze.debug.js"></script>
+    <script type="text/javascript" src="../Scripts/require.js"></script>
+    <script type="text/javascript" src="../Scripts/moment.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+			require.config({ baseUrl: "../" });
+            require(["Scripts/gherkinRunner"], function (gherkinRunner) {
+                gherkinRunner.addFeatureSet("Features/API/Alerts/featureSet");
+                gherkinRunner.run();
+            });
+        });
+    </script>
+</head>
+
+<body>
+</body>
+</html>

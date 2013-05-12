@@ -1,0 +1,76 @@
+﻿define(['Features/testHelper'], function (testHelper) {
+    var _this = {};
+    _this["calls save changes"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the client is connected as a user who can add a note to a patient"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the client is connected as a user who can not add a note to a patient"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the client is connected as a user who can view notes on a patient"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the client marks the note as deleted"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the client queries for a single note with more than 150 characters"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the client queries for the list of notes for a patient"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the client saves a new note and note link to a patient the user does not have access to"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the client saves a new note and note link to a patient the user has access to"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the client saves a new note with a note link to a non notable object"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the client saves a new note without a note link"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the client should receive a 403 response with a message indicating they can not add notes to that object"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the client should receive a 403 response with a message indicating they must provide at least one note link"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the client should revieve a 401 response"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the new note and note link should have valid ids"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the note should be removed from the local repository"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the note should have more than 150 characters"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the note should not be found on the server"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the notes should be truncated to only 150 characters"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the system should return the list of notes"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the system should return the note"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["the user has added a note to a patient"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["there is a single patient that has 10 notes"] = function (context, promise) {
+		promise.reject();
+    };
+    _this["there is a single patient that has a note with more than 150 characters"] = function (context, promise) {
+		promise.reject();
+    };
+    return _this;
+});

@@ -1,0 +1,145 @@
+﻿Feature: API Note Update
+    As a system client 
+    I should be able to add a note to a patient 
+    So that I can track free form information related to the patient
+
+    Feature Background: Setup Notes 
+        Given the client is connected as "Administrator"
+          and the practice has the following staff members
+                | UserName         | Provider |
+                | NoteUpdateProvider  | 1        |
+                | NoteUpdateEditor    | 0        |
+                | NoteUpdateNoEditor  | 0        |
+                | NoteUpdateNoPatient | 0        |
+          and the staff members have the following permissions
+                | UserName        | Permission            | Level |
+                | NoteUpdateProvider | PAT_RegistrationNotes | 100   |
+                | NoteUpdateProvider | PAT_OrderNotes        | 100   |
+                | NoteUpdateProvider | PAT_AppointmentNotes  | 100   |
+                | NoteUpdateEditor   | PAT_RegistrationNotes | 80    |
+                | NoteUpdateEditor   | PAT_OrderNotes        | 80    |
+                | NoteUpdateEditor   | PAT_AppointmentNotes  | 80    |
+                | NoteUpdateNoEditor | PAT_RegistrationNotes | 40    |
+                | NoteUpdateNoEditor | PAT_OrderNotes        | 40    |
+                | NoteUpdateNoEditor | PAT_AppointmentNotes  | 40    |
+                | NoteUpdateNoPatient| PAT_RegistrationNotes | 80    |
+                | NoteUpdateNoPatient| PAT_OrderNotes        | 80    |
+                | NoteUpdateNoPatient| PAT_AppointmentNotes  | 80    |
+          and the following staff members are linked to the provider named "NoteUpdateProvider"
+                | UserName        |
+                | NoteUpdateEditor   |
+                | NoteUpdateNoEditor |
+          and the provider named "NoteUpdateProvider" has a patient named "NoteUpdatePatient"
+          and the patient named "NoteUpdatePatient" has an order called "NoteUpdateOrder"
+          and the patient named "NoteUpdatePatient" has an appointment called "NoteUpdateAppt"
+          and the client is logged off
+
+    Scenario Outline: Update Note
+        Given the client is connected as "NoteUpdateEditor"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+          and the client queries the API for the new note
+         When the client updates the new note
+          and the client queries the API for the new note
+         Then the note should have the <ObjectType> identified by <ParentObjectName> as the parent
+          and the queried "Note" properties should match the updated "Note" properties for the following properties
+              | Properties                                        |
+              | id, topicId, topicRecordId, urgent, subject, body |
+          and the created information should be set
+          and the modified information should be set
+
+        Examples: 
+              | ObjectType  | ParentObjectName  | Count |
+              | Patient     | NoteUpdatePatient    | 1     |
+              | Appointment | NoteUpdateAppt       | 1     |
+              | Order       | NoteUpdateOrder      | 1     |
+
+    Scenario Outline: Update Note No Permission
+        Given the client is connected as "NoteUpdateEditor"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+          and the client is connected as "NoteUpdateNoEditor"
+          and the client queries the API for the new note
+         When the client attempts to update the new note
+         Then the client should receive a response with a status of "403"
+          and the response message should be "Attempted to perform an unauthorized operation."
+
+        Examples: 
+              | ObjectType  | ParentObjectName  | Count |
+              | Patient     | NoteUpdatePatient    | 1     |
+              | Appointment | NoteUpdateAppt       | 1     |
+              | Order       | NoteUpdateOrder      | 1     |
+
+    Scenario Outline: Update Note No Patient Access
+        Given the client is connected as "NoteUpdateEditor"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+          and the client queries the API for the new note
+          and the client is connected as "NoteUpdateNoPatient"
+         When the client attempts to update the new note
+         Then the client should receive a response with a status of "403"
+          and the response message should be "Attempted to perform an unauthorized operation."
+
+        Examples: 
+              | ObjectType  | ParentObjectName     | Count |
+              | Patient     | NoteUpdatePatient    | 1     |
+              | Appointment | NoteUpdateAppt       | 1     |
+              | Order       | NoteUpdateOrder      | 1     |
+
+    Scenario Outline: Update Note Missing Parent
+        Given the client is connected as "NoteUpdateEditor"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+          and the client queries the API for the new note
+         When the client updates the new note to have a missing parent
+          and the client queries the API for the new note
+         Then the note should have the <ObjectType> identified by <ParentObjectName> as the parent
+
+        Examples: 
+              | ObjectType  | ParentObjectName     | Count |
+              | Patient     | NoteUpdatePatient    | 1     |
+              | Appointment | NoteUpdateAppt       | 1     |
+              | Order       | NoteUpdateOrder      | 1     |
+
+    Scenario Outline: Update Note Invalid Parent
+        Given the client is connected as "NoteUpdateEditor"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+          and the client queries the API for the new note
+         When the client updates the new note to have an invalid parent
+          and the client queries the API for the new note
+         Then the note should have the <ObjectType> identified by <ParentObjectName> as the parent
+
+        Examples: 
+              | ObjectType  | ParentObjectName     | Count |
+              | Patient     | NoteUpdatePatient    | 1     |
+              | Appointment | NoteUpdateAppt       | 1     |
+              | Order       | NoteUpdateOrder      | 1     |
+
+    Scenario Outline: Update Note Missing Required Fields
+        Given the client is connected as "NoteUpdateEditor"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+          and the client queries the API for the new note
+         When the client saves the note with the <PropertyName> field null
+         Then the client should receive validation error with a message of "'<PropertyName>' is required"
+
+        Examples:
+             | PropertyName  | ObjectType  | ParentObjectName     | Count | ErrorKey |
+             | urgent        | Patient     | NoteUpdatePatient    | 1     | required |
+             | urgent        | Appointment | NoteUpdateAppt       | 1     | required |
+             | urgent        | Order       | NoteUpdateOrder      | 1     | required |
+             | subject       | Patient     | NoteUpdatePatient    | 1     | required |
+             | subject       | Appointment | NoteUpdateAppt       | 1     | required |
+             | subject       | Order       | NoteUpdateOrder      | 1     | required |
+             | body          | Patient     | NoteUpdatePatient    | 1     | required |
+             | body          | Appointment | NoteUpdateAppt       | 1     | required |
+             | body          | Order       | NoteUpdateOrder      | 1     | required |
+
+    Scenario Outline: Update Note Subject Too Long
+        Given the client is connected as "NoteUpdateEditor"
+          and the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+          and the client queries the API for the new note
+         When the client saves the note with the <PropertyName> field with a string <CharacterCount> long
+         Then the client should receive validation error with a message of "'<PropertyName>' must be a string with less than <CharacterCount> characters"
+
+        Examples:
+             | PropertyName  | ObjectType  | ParentObjectName     | Count | CharacterCount | ErrorKey  |
+             | subject       | Patient     | NoteUpdatePatient    | 1     | 101            | maxLength |
+             | subject       | Appointment | NoteUpdateAppt       | 1     | 101            | maxLength |
+             | subject       | Order       | NoteUpdateOrder      | 1     | 101            | maxLength |
+

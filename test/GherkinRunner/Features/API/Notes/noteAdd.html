@@ -1,0 +1,101 @@
+﻿Feature: API Note Add
+    As a system client 
+    I should be able to add a note to a patient 
+    So that I can track free form information related to the patient
+
+    Feature Background: Setup Notes 
+        Given the client is connected as "Administrator"
+          and the practice has the following staff members
+                | UserName         | Provider |
+                | NoteAddProvider  | 1        |
+                | NoteAddEditor    | 0        |
+                | NoteAddNoEditor  | 0        |
+                | NoteAddNoPatient | 0        |
+          and the staff members have the following permissions
+                | UserName        | Permission            | Level |
+                | NoteAddProvider | PAT_RegistrationNotes | 100   |
+                | NoteAddProvider | PAT_OrderNotes        | 100   |
+                | NoteAddProvider | PAT_AppointmentNotes  | 100   |
+                | NoteAddEditor   | PAT_RegistrationNotes | 80    |
+                | NoteAddEditor   | PAT_OrderNotes        | 80    |
+                | NoteAddEditor   | PAT_AppointmentNotes  | 80    |
+                | NoteAddNoEditor | PAT_RegistrationNotes | 0     |
+                | NoteAddNoEditor | PAT_OrderNotes        | 0     |
+                | NoteAddNoEditor | PAT_AppointmentNotes  | 0     |
+                | NoteAddNoPatient| PAT_RegistrationNotes | 80    |
+                | NoteAddNoPatient| PAT_OrderNotes        | 80    |
+                | NoteAddNoPatient| PAT_AppointmentNotes  | 80    |
+          and the following staff members are linked to the provider named "NoteAddProvider"
+                | UserName        |
+                | NoteAddEditor   |
+                | NoteAddNoEditor |
+          and the provider named "NoteAddProvider" has a patient named "NoteAddPatient"
+          and the patient named "NoteAddPatient" has an order called "NoteAddOrder"
+          and the patient named "NoteAddPatient" has an appointment called "NoteAddAppt"
+          and the client is logged off
+
+    Scenario Outline: Add Note
+        Given the client is connected as "NoteAddEditor"
+         When the client saves <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+         Then the client should be able to query the API for the new note
+          and the note should have the <ObjectType> identified by <ParentObjectName> as the parent
+          and the queried "Note" properties should match the added "Note" properties for the following properties
+              | Properties                                        |
+              | id, topicId, topicRecordId, urgent, subject, body |
+          and the created information should be set
+          and the modified information should be set
+
+        Examples: 
+              | ObjectType  | ParentObjectName  | Count |
+              | Patient     | NoteAddPatient    | 1     |
+              | Appointment | NoteAddAppt       | 1     |
+              | Order       | NoteAddOrder      | 1     |
+
+    Scenario Outline: Add Note No Permission
+        Given the client is connected as "NoteAddNoEditor"
+         When the client attempts to save <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+         Then the client should receive a response with a status of "403"
+          and the response message should be "Attempted to perform an unauthorized operation."
+
+        Examples: 
+              | ObjectType  | ParentObjectName  | Count |
+              | Patient     | NoteAddPatient    | 1     |
+              | Appointment | NoteAddAppt       | 1     |
+              | Order       | NoteAddOrder      | 1     |
+
+    Scenario Outline: Add Note No Patient Access
+        Given the client is connected as "NoteAddNoPatient"
+         When the client attempts to save <Count> new notes to the <ObjectType> identified by <ParentObjectName>
+         Then the client should receive a response with a status of "403"
+          and the response message should be "No access to the specified patient."
+
+        Examples: 
+              | ObjectType  | ParentObjectName  | Count |
+              | Patient     | NoteAddPatient    | 1     |
+              | Appointment | NoteAddAppt       | 1     |
+              | Order       | NoteAddOrder      | 1     |
+
+    Scenario: Add Note Missing Parent
+        Given the client is connected as "NoteAddEditor"
+         When the client saves a new note with a missing parent specified
+         Then the client should receive a response with a status of "400"
+          and the response message should be "The specified parent object does not exist."
+
+    Scenario: Add Note Invalid Parent
+        Given the client is connected as "NoteAddEditor"
+         When the client saves a new note with an invalid parent type specified
+         Then the client should receive a response with a status of "403"
+          and the response message should be "Attempted to perform an unauthorized operation."
+
+    Scenario Outline: Add Note Missing Required Fields
+        Given the client is connected as "NoteAddEditor"
+         When the client saves a new note with the <PropertyName> field null
+         Then the client should receive validation error with a message of "'<PropertyName>' is required"
+
+        Examples:
+             | PropertyName  | ErrorKey  |
+             | topicId       | required  |
+             | topicRecordId | required  |
+             | urgent        | required  |
+             | subject       | required  |
+             | body          | required  |
